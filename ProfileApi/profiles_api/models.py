@@ -15,13 +15,14 @@ class UserProfileManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, name=name)
 
-        #Set password encrypts the password field from plain text
+        # Set password encrypts the password field from plain text
         user.set_password(password)
         user.save(using=self.db)
 
         return user
 
-    def create_super_user(self, email, name, password):
+    # This function is used when we are creating a new super user from CLI. The naming is strict
+    def create_superuser(self, email, name, password):
         """Creates a new Super User or Admin user"""
         user = self.create_user(email, name, password)
         user.is_superuser = True
