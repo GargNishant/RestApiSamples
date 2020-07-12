@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ViewSet
-from profiles_api import serializers
+from rest_framework.viewsets import ViewSet, ModelViewSet
+from profiles_api import serializers, models
 
 
 class HelloApiView(APIView):
@@ -115,3 +115,14 @@ class HelloViewSet(ViewSet):
 
         return Response({'http_method': 'DELETE'})
 
+
+# Model ViewSet is similar to ViewSets, It gives extra functionality to manage Models
+class UserProfileViewSet(ModelViewSet):
+    """Handles creating and updating Profiles"""
+
+    # Connecting the serializer with ViewSet
+    serializer_class = serializers.UserProfileSerializer
+
+    # Mentioning the objects that are going to be managed in this ViewSet
+    # In current, we want to use all fields in UserProfile Model
+    queryset = models.UserProfile.objects.all()
