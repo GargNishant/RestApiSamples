@@ -17,6 +17,7 @@ class HelloApiView(APIView):
         :param request Contains the parameters send
         :param format Format of the response. NOT IN USE
         """
+
         an_api = [
             'Users HTTP Method as function (get, post, patch, put, delete)',
             'Is similar to traditional Django View',
@@ -37,3 +38,31 @@ class HelloApiView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, pk=None):
+        """
+        Updates the Entire object with the provided
+        :parameter
+        :param request Contains the object which will replace an existing object
+        :param pk Primary Key of the object that has to be updated
+        """
+
+        return Response({'method': 'PUT'})
+
+    def patch(self, request, pk=None):
+        """
+        Updates only some properties of the already existing entry/object
+        :parameter
+        :param request Contains the properties which will update the properties of existing object
+        :param pk Primary Key of the object that has to be updated
+        """
+
+        return Response({'method': 'PATCH'})
+
+    def delete(self, request, pk=None):
+        """
+        Deletes the existing object
+        :parameter
+        :param pk Primary Key of the object that has to be deleted
+        """
+
+        return Response({'method': 'DELETE'})
