@@ -28,3 +28,13 @@ def addPost(request):
     val2 = int(request_json["num2"])
 
     return HttpResponse(f'Result is: {val1+val2}')
+
+
+@csrf_exempt
+def addPostForm(request):
+    """Adds 2 numbers, coming as num1 and num2 in POST Request. The API expects application/form-data
+    content type. After Addition, it gives Result in HttpResponse"""
+    val1 = int(request.POST['num1'])
+    val2 = int(request.POST['num2'])
+
+    return HttpResponse(f'Result is: {val1+val2}')
