@@ -1,0 +1,21 @@
+CONNECT MYSQL DB IN VAGRANT FROM OUTSIDE
+
+1. edit the /etc/mysql/my.cnf file and make sure, either
+    you have bind-address           = 0.0.0.0 (meaning accepting from all addresses)
+    or you comment the line #bind-address ...
+You may need to add it to the mysqld section of the my.cnf file:
+[mysqld]
+bind-address = 0.0.0.0
+make sure to restart your mysql server after the change
+$ sudo service mysql restart
+
+2. AFTER ENTERING MYSQL (The User is root with password root)
+SHOW GRANTS FOR  'root'@'localhost';
+SHOW GRANTS FOR  'root'@'%';
+
+UPDATE mysql.user
+SET Host='%' WHERE Host='localhost' AND User='root';
+
+FLUSH PRIVILEGES;
+
+3. Now connect to the mysql using the private network Ip in vagrant file
