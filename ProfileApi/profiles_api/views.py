@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ViewSet, ModelViewSet
 from profiles_api import serializers, models
+from rest_framework.authentication import TokenAuthentication
+from profiles_api import profile_permission
+
 
 
 class HelloApiView(APIView):
@@ -120,9 +123,14 @@ class HelloViewSet(ViewSet):
 class UserProfileViewSet(ModelViewSet):
     """Handles creating and updating Profiles"""
 
+    authentication_classes = (TokenAuthentication, )
+    permission_classes = (profile_permission.UpdateOwnProfile, )
+
+
     # Connecting the serializer with ViewSet
     serializer_class = serializers.UserProfileSerializer
 
     # Mentioning the objects that are going to be managed in this ViewSet
     # In current, we want to use all fields in UserProfile Model
     queryset = models.UserProfile.objects.all()
+    print("asdasjhdbsadbadjb")
