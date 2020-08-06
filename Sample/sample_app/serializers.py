@@ -10,7 +10,11 @@ class UserProfileSerializer(serializers.Serializer):
     mobile = serializers.IntegerField()
     email = serializers.EmailField()
     isActive = serializers.BooleanField()
-    password = serializers.CharField(min_length=10, max_length=200)
+    # DOCS: https://www.django-rest-framework.org/api-guide/fields/
+    # Write only makes the field to be only created or modified, not avail for reading
+    password = serializers.CharField(min_length=10, max_length=200, write_only=True)
+    # Read only make it only for Read. Ignored when trying to modify or create it by args
+    id = serializers.IntegerField(read_only=True)
 
     def update(self, instance, validated_data):
         # Work in Progress
