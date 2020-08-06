@@ -1,0 +1,65 @@
+1. Install MySQL Server in Machine using:
+sudo apt-get install mysql-server
+
+2. Change the default password of MySQL Server using:
+sudo mysql_secure_installation
+Last 2 options are no and rest are yes. I think there are only 3 options.
+
+This option will change the password of the root user
+
+3. Check the status of My SQL Server using:
+sudo service mysql status
+Replace the 'status' with stop, then check for inactive, then start and check for active state
+
+4. Login to mySQL Server using:
+sudo mysql -u root -p
+the password from step 2
+
+5. mysql> FLUSH PRIVILEGES;
+
+Try to connect to the Database using Dbeaver with no database selected localhost and password from step 2
+
+If "Access Denied for user 'root@localhost'", then use following:
+
+    a. UPDATE mysql.user SET plugin = 'mysql_native_password', authentication_string = PASSWORD('Enter_New_Password') WHERE User = 'root';
+	b. FLUSH PRIVILEGES;
+
+The password for current Mysql is Root#123
+Then check again in dbeaver
+
+
+
+
+Then in venv install MysqlClient
+
+1. Get the pre-requiste bindaries using:
+sudo apt-get install python3-dev default-libmysqlclient-dev build-essential
+
+2. Install MysqlClient using:
+pip install mysqlclient
+
+
+After django-admin is installed and project and app has been created
+1. Change the Database in Settings.py by replacing:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'myDB',
+        'USE'R: 'root',
+        'HOST' : 'localhost',
+        'PORT' : '3306',
+        'PASSWORD': 'Root#123'
+    }
+}
+
+
+2. Make Migrations using:
+python manage.py makemigrations
+
+3. Run Migrations using:
+python manage.py migrate
+
+4. Run the Django Server. It will connect to the Mysql
+
+4. At last check in dbeaver for new Tables created or not. If some new tables are created then they must belong to django and hence it is connected
+
