@@ -50,7 +50,6 @@ class SessionSerializer(serializers.Serializer):
     createdAt = serializers.DateTimeField()
     deviceDetail = serializers.CharField()
 
-
     def create(self, validated_data):
         return Sessions.objects.create(**validated_data)
 
