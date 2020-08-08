@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile
+from .models import UserProfile, Sessions
 
 
 class UserProfileSerializer(serializers.Serializer):
@@ -34,3 +34,25 @@ class UserProfileSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return UserProfile.objects.create(**validated_data)
+
+
+class SessionSerializer(serializers.Serializer):
+    """
+    Creates a new session with the given data
+    :param
+    user_id: ForeignKey Column Name. Contains User_id
+    session: String Column. Must be unique
+    createdAt: Date TimeField
+    deviceDetail: The Device from which login requested
+    """
+    user_id = serializers.IntegerField()
+    session = serializers.CharField()
+    createdAt = serializers.DateTimeField()
+    deviceDetail = serializers.CharField()
+
+
+    def create(self, validated_data):
+        return Sessions.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        pass
