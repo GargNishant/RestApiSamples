@@ -7,6 +7,9 @@ from .serializers import UserProfileSerializer, SessionSerializer
 from django.db.models import Q
 from datetime import datetime
 from .session_utility import utitliy
+import rabbitmq.sender
+import rabbitmq.receiver
+
 # Create your views here.
 
 
@@ -82,6 +85,8 @@ class SessionView(APIView):
         (Email,Password) or (Mobile,Password).
         :param request: The Parameters or Payloads sent by client
         :return: JSON Response contain
+
+        EDIT: Now it is sending the user_id to RabbitMQ which will save dummy data
         """
         email = request.data.get('email')
         password = request.data.get('password')
@@ -101,8 +106,11 @@ class SessionView(APIView):
 
             serializer = SessionSerializer(data=request_)
             if serializer.is_valid(raise_exception=True):
-                session_saved = serializer.save()
-                return Response({'success': 'Session {} created'.format(session_saved.session)})
+
+                #####################
+                sender = rabbitmq.sender.Sender()
+                sender.publish(payload={"user_id": user_instance[0].id})
+                return Response({'success': 'Session created'})
 
         elif mobile is not None:
             user_instance = UserProfile.objects.filter(mobile=mobile, password=password)
