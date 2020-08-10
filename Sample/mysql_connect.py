@@ -13,8 +13,10 @@ class MySqlConnect(object):
 
         if query is not None:
             self._myCursor.execute(query)
-            records = self._myCursor.fetchall()
-            return records
+            self._myDb.commit()
+            # self._myCursor.execute()
+            # records = self._myCursor.fetchall()
+            return "Success"
 
         if table is not None:
             self._myCursor.execute(f'SELECT * FROM {table}')
