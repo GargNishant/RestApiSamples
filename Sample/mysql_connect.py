@@ -7,16 +7,9 @@ class MySqlConnect(object):
         self._myDb = mysql.connector.connect(host='localhost', user="root", passwd='Root#123', database=database)
         self._myCursor = self._myDb.cursor()
 
-    def get_records(self, table=None, query: str = None):
+    def get_records(self, table=None):
         if not self._myDb.is_connected():
             return "Error. Connect not established"
-
-        if query is not None:
-            self._myCursor.execute(query)
-            self._myDb.commit()
-            # self._myCursor.execute()
-            # records = self._myCursor.fetchall()
-            return "Success"
 
         if table is not None:
             self._myCursor.execute(f'SELECT * FROM {table}')
@@ -26,6 +19,12 @@ class MySqlConnect(object):
 
     def close_connection(self):
         self._myDb.disconnect()
+
+    def execute(self, query: str):
+        if query is None or len(query) == 0 or not self._myDb.is_connected():
+            return
+        self._myCursor.execute(query)
+        self._myDb.commit()
 
 
 if __name__ == "__main__":
