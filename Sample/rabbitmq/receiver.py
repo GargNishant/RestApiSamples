@@ -24,9 +24,8 @@ class Receiver(object):
         json = ast.literal_eval(body.decode('utf-8'))
         device_detail = "device_details"
         session = str(datetime.now())
-        result = mysql.get_records(query=f"INSERT INTO sample_app_sessions (session, createdAt, deviceDetail,"
-                                f" user_id) VALUES ('{session}', '{session}', "
-                                         f"'{device_detail}', {int(json['user_id'])});")
+        result = mysql.execute(query=f"INSERT INTO sample_app_sessions (session, createdAt, deviceDetail, user_id) VALUES "
+                                         f"('{session}', '{session}', {device_detail}', {int(json['user_id'])});")
         print(result)
         mysql.close_connection()
 
