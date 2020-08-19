@@ -1,118 +1,142 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .models import UserProfile, Sessions
 from .serializers import UserProfileSerializer, SessionSerializer
 from django.db.models import Q
 from datetime import datetime
 from .session_utility import utitliy
 import rabbitmq.sender
-import rabbitmq.receiver
 
 # Create your views here.
 
 
 class UserProfileView(APIView):
 
-    def get(self, request):
-        user_profiles = UserProfile.objects.all()
-        # the many param informs the serializer that it will be serializing more than a single article.
-        serializer = UserProfileSerializer(user_profiles, many=True)
-        return Response({'userProfiles': serializer.data})
+    @staticmethod
+    def get(request, username=None, mobile=None):
 
-    def post(self, request):
+        if username is not None or mobile is not None:
+            try:
+                user_profiles = UserProfile.objects.get(Q(email=username) | Q(mobile=mobile))
+                serializer = UserProfileSerializer(user_profiles)
+                return Response({'userProfiles': serializer.data})
+            except ObjectDoesNotExist:
+                return Response({"failed": "UserName/Mobile not Registered"}, status=404)
+
+        else:
+            user_profiles = UserProfile.objects.all()
+            serializer = UserProfileSerializer(user_profiles, many=True)
+            return Response({'userProfiles': serializer.data})
+
+    @staticmethod
+    def post(request):
         user_profile = request.data.get('user-profile')
 
-        # filter returns a List, while get returns single object and throws error if multiple or none
-        instance = UserProfile.objects.filter(Q(email=user_profile['email']) | Q(mobile=user_profile['mobile']))
+        if user_profile is None:
+            return Response({"failed": "user-profile not found"}, status=500)
 
-        if instance is None or len(instance) == 0:
-            serializer = UserProfileSerializer(data=user_profile)
+        password = request.GET.get('password', None)
+        email = request.GET.get('email', None)
+        mobile = request.GET.get('mobile', None)
 
-            if serializer.is_valid(raise_exception=True):
-                user_saved = serializer.save()
-                return Response({"success": "User '{}' created Successfully".format(user_saved.firstName)})
-            return Response({"failed": "Error Validating Fields"}, status=500)
-        return Response({"failed": "Username or Mobile already taken"}, status=500)
+        if not utitliy.Utility.check_cred_validity(password=password, email=email, mobile=mobile):
+            return Response({"failed": "Invalid Username/Password"})
 
-    def put(self, request, pk):
-        instance = get_object_or_404(UserProfile.objects.all(), pk=pk)
+        user_instance = UserProfile.objects.filter(Q(email=user_profile['email']) | Q(mobile=user_profile['mobile']))
+
+        if len(user_instance) > 0:
+            return Response({"failed": "Username or Mobile already taken"}, status=500)
+
+        serializer = UserProfileSerializer(data=user_profile)
+        if serializer.is_valid(raise_exception=True):
+            user_saved = serializer.save()
+            return Response({"success": "User '{}' created Successfully".format(user_saved.firstName)})
+
+    @staticmethod
+    def put(request, pk):
+        if pk is None or type(pk) != int:
+            return Response({"failed": "Invalid Id"}, status=500)
+
+        user_profile = get_object_or_404(UserProfile.objects.all(), pk=pk)
         data = request.data.get('user-profile')
-        serializer = UserProfileSerializer(instance=instance, data=data, partial=True)
+        if data is None:
+            return Response({"failed": "user-profile not found"}, status=500)
+
+        serializer = UserProfileSerializer(instance=user_profile, data=data, partial=True)
 
         if serializer.is_valid(raise_exception=True):
             user_saved = serializer.save()
             return Response({"Success": "User {} Updated Successfully".format(user_saved.firstName)})
-
-        return Response({"failed": "Error"}, status=500)
 
 
 class SessionView(APIView):
     """
     Handles the Session Requests. It has GET, POST methods
     """
-    def get(self, request):
+
+    @staticmethod
+    def get(request):
         """
-        :param request: Parameters in
-        :return: Number of Sessions for the User with the given Credentials in JSON format
+        Query's the Database to find if there are and how many active sessions are present against
+        given user credentials
+        :param request: Expected are password and Mobile/Username
+        :return: Number of Sessions for the User
         """
         if request is None:
-            return Response({"failed": "No credentials Provided"})
+            return Response({"failed": "No credentials Provided"}, status=500)
 
-        email = request.GET['email']
-        password = request.GET['password']
-        mobile = request.data.GET['mobile']
+        if request.GET.get('password') is None:
+            return Response({'failed': 'No password Provided'}, status=404)
+
+        password = request.GET.get('password', None)
+        email = request.GET.get('email', None)
+        mobile = request.GET.get('mobile', None)
 
         if not utitliy.Utility.check_cred_validity(password=password, email=email, mobile=mobile):
             return Response({"failed": "Invalid Username/Password"})
 
-        user_instance = UserProfile.objects.filter(email=email, password=password)
+        # Checking number of sessions
+        try:
+            user_instance = UserProfile.objects.get((Q(email=email) | Q(mobile=mobile)), password=password)
+            session_instances = Sessions.objects.filter(user=user_instance)
 
-        if user_instance is None or len(user_instance) == 0:
+            if len(session_instances) == 0:
+                return Response({"success": "No Active Sessions"})
+            return Response({"success": len(session_instances)})
+
+        except ObjectDoesNotExist:
             return Response({"failed": "Invalid Username/Password"})
 
-        session_instances = Sessions.objects.filter(user=user_instance[0])
-
-        if session_instances is None or len(session_instances) == 0:
-            return Response({"success": "No Active Sessions"})
-
-        return Response({"success": len(session_instances)})
-
-    def post(self, request):
+    @staticmethod
+    def post(request):
         """
         Creates a new Session in oneToMany relationship with existing User. Accepts the Credentials in
         (Email,Password) or (Mobile,Password).
         :param request: The Parameters or Payloads sent by client
-        :return: JSON Response contain
+        :return: JSON Response containing result
 
         EDIT: Now it is sending the user_id to RabbitMQ which will save dummy data
         """
-        email = request.data.get('email')
-        password = request.data.get('password')
-        mobile = request.data.get('mobile')
+        email = request.data.get('email', None)
+        password = request.data.get('password', None)
+        mobile = request.data.get('mobile', None)
 
         if not utitliy.Utility.check_cred_validity(password=password, email=email, mobile=mobile):
             return Response({"failed": "Invalid Username/Password"})
 
-        if email is not None:
-            user_instance = UserProfile.objects.filter(email=email, password=password)
-            if user_instance is None or len(user_instance) == 0:
-                return Response({"failed": "Invalid Username/Password"}, status=500)
+        try:
+            user_profile = UserProfile.objects.get(Q(password=password), (Q(email=email) | Q(mobile=mobile)))
+            data = {'user_id': user_profile.id, 'session': str(datetime.now()),
+                    'createdAt': str(datetime.now()), 'deviceDetail': "default-device"}
 
-            # Data which will be saved in the DB
-            request_ = {'user_id': user_instance[0].id, 'session': str(datetime.now()),
-                        'createdAt': str(datetime.now()), 'deviceDetail': "default-device"}
-
-            serializer = SessionSerializer(data=request_)
+            serializer = SessionSerializer(data=data)
             if serializer.is_valid(raise_exception=True):
-
-                #####################
                 sender = rabbitmq.sender.Sender()
-                sender.publish(payload={"user_id": user_instance[0].id})
+                sender.publish(payload={"session": data})
                 return Response({'success': 'Session created'})
 
-        elif mobile is not None:
-            user_instance = UserProfile.objects.filter(mobile=mobile, password=password)
-            if user_instance is None or len(user_instance) == 0:
-                return Response({"failed": "Invalid Mobile/Password"}, status=500)
+        except ObjectDoesNotExist:
+            return Response({"failed": "Username/Password not registered"})
+
