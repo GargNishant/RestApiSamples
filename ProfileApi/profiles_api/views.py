@@ -7,7 +7,6 @@ from rest_framework.authentication import TokenAuthentication
 from profiles_api import profile_permission
 
 
-
 class HelloApiView(APIView):
     """Test API View"""
 
@@ -133,4 +132,3 @@ class UserProfileViewSet(ModelViewSet):
     # Mentioning the objects that are going to be managed in this ViewSet
     # In current, we want to use all fields in UserProfile Model
     queryset = models.UserProfile.objects.all()
-    print("asdasjhdbsadbadjb")

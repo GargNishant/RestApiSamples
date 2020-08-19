@@ -1,6 +1,8 @@
 CONNECT MYSQL DB IN VAGRANT FROM OUTSIDE
 
-1. edit the /etc/mysql/my.cnf file and make sure, either
+1. sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+edit the /etc/mysql/my.cnf file and make sure, either
+
     you have bind-address           = 0.0.0.0 (meaning accepting from all addresses)
     or you comment the line #bind-address ...
 You may need to add it to the mysqld section of the my.cnf file:
@@ -13,8 +15,7 @@ $ sudo service mysql restart
 SHOW GRANTS FOR  'root'@'localhost';
 SHOW GRANTS FOR  'root'@'%';
 
-UPDATE mysql.user
-SET Host='%' WHERE Host='localhost' AND User='root';
+UPDATE mysql.user SET Host='%' WHERE Host='localhost' AND User='root';
 
 FLUSH PRIVILEGES;
 
