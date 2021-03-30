@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -87,3 +88,35 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+SIMPLE_JWT = {
+    # Lifetime of Access Token, which is used for authentication headers
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=5),
+    # Lifetime of Access Token, which is used for getting a new Auth Token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    # After claiming a new Access token, do we want a new Refresh Token too?
+    'ROTATE_REFRESH_TOKENS': True,
+    # After Rotation of Refresh Token, do we want to blacklist (block) the old Token?
+    'BLACKLIST_AFTER_ROTATION': False,
+    # Using either Symmetric or Asymmetric Algo to Sign the Tokens
+    'ALGORITHM': 'HS256',
+    # The key which will be used During Signing of Token
+    'SIGNING_KEY': SECRET_KEY,
+    # In case of Asymmetric, this will be used to very the tokens
+    'VERIFYING_KEY': None,
+    # The header name that will be check to get the Access Token. HTTP_AUTHORIZATION -> Authorization
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    # The Prefix for the Access Token. AUTH_HEADER_NAME: AUTH_HEADER_TYPES (Access_Token)
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    # The name of column from the preferred users table. The column value should not change for particular
+    # user. The preferred value is name of PK column for the table. If any changes, then clashes are
+    # possible
+    'USER_ID_FIELD': 'id',
+    # The key against the value for 'USER_ID_FIELD'. Key value will will be stored under
+    # object of refresh_token.access_token.payload['USER_ID_CLAIM'] = USER_ID_FIELD
+    'USER_ID_CLAIM': 'user_id',
+    # Using only AccessToken. Refer Token Types from docs
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    # Key for the type of token. Refer Token types in Docs
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
